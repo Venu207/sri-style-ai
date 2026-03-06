@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ShoppingBag } from "lucide-react";
 import { motion } from "framer-motion";
 import { Product } from "@/data/products";
+import { getProductImage } from "@/data/productImages";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
 
@@ -10,18 +11,10 @@ interface Props {
   index?: number;
 }
 
-const colorSwatches: Record<string, string> = {
-  red: "bg-red-500", blue: "bg-blue-500", black: "bg-gray-900", white: "bg-white border",
-  green: "bg-green-600", navy: "bg-blue-900", maroon: "bg-red-900", gold: "bg-yellow-500",
-  pink: "bg-pink-400", cream: "bg-amber-50 border", "sky blue": "bg-sky-400",
-  beige: "bg-amber-100 border", grey: "bg-gray-400", yellow: "bg-yellow-400",
-  orange: "bg-orange-500", teal: "bg-teal-500", peach: "bg-orange-200 border",
-  lavender: "bg-purple-300", burgundy: "bg-red-800", olive: "bg-green-800",
-};
-
 const ProductCard = ({ product, index = 0 }: Props) => {
   const { addToCart } = useCart();
-  const colorTag = product.tags[0];
+  const productIndex = parseInt(product.id.split("-").pop() || "1") - 1;
+  const imageSrc = getProductImage(product.category, productIndex);
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -39,11 +32,12 @@ const ProductCard = ({ product, index = 0 }: Props) => {
     >
       <Link to={`/product/${product.id}`} className="group block">
         <div className="relative overflow-hidden rounded-lg aspect-[3/4] bg-muted mb-3">
-          <div className="absolute inset-0 flex items-center justify-center gradient-gold opacity-20">
-            <span className="text-6xl font-display font-bold text-primary-foreground/30">
-              {product.name.charAt(0)}
-            </span>
-          </div>
+          <img
+            src={imageSrc}
+            alt={product.name}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            loading="lazy"
+          />
           <div className="absolute inset-0 bg-charcoal/5 group-hover:bg-charcoal/0 transition-colors duration-300" />
           <button
             onClick={handleAdd}
@@ -64,12 +58,7 @@ const ProductCard = ({ product, index = 0 }: Props) => {
           <h3 className="font-display text-sm font-medium text-foreground group-hover:text-primary transition-colors line-clamp-1">
             {product.name}
           </h3>
-          <div className="flex items-center justify-between mt-1">
-            <p className="font-body font-semibold text-foreground">₹{product.price.toLocaleString()}</p>
-            {colorTag && colorSwatches[colorTag] && (
-              <span className={`w-3 h-3 rounded-full ${colorSwatches[colorTag]}`} />
-            )}
-          </div>
+          <p className="font-body font-semibold text-foreground mt-1">₹{product.price.toLocaleString()}</p>
         </div>
       </Link>
     </motion.div>

@@ -1,5 +1,6 @@
 import { X, Minus, Plus, ShoppingBag } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { getProductImage } from "@/data/productImages";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -45,10 +46,12 @@ const CartDrawer = () => {
                 <div className="space-y-4">
                   {items.map(item => (
                     <div key={item.product.id} className="flex gap-4 p-3 rounded-lg bg-muted/50">
-                      <div className="w-16 h-20 rounded bg-muted gradient-gold opacity-30 flex-shrink-0 flex items-center justify-center">
-                        <span className="text-lg font-display font-bold text-primary-foreground/50">
-                          {item.product.name.charAt(0)}
-                        </span>
+                      <div className="w-16 h-20 rounded overflow-hidden flex-shrink-0">
+                        <img
+                          src={getProductImage(item.product.category, parseInt(item.product.id.split("-").pop() || "1") - 1)}
+                          alt={item.product.name}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-display text-sm font-medium truncate">{item.product.name}</h4>
