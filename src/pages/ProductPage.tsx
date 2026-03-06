@@ -1,5 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { getProductById, getProductsByDepartment } from "@/data/products";
+import { getProductImage } from "@/data/productImages";
 import ProductCard from "@/components/ProductCard";
 import Footer from "@/components/Footer";
 import { useCart } from "@/context/CartContext";
@@ -20,6 +21,8 @@ const ProductPage = () => {
     );
   }
 
+  const productIndex = parseInt(product.id.split("-").pop() || "1") - 1;
+  const imageSrc = getProductImage(product.category, productIndex);
   const related = getProductsByDepartment(product.category).filter(p => p.id !== product.id).slice(0, 4);
 
   const handleAddToCart = () => {
@@ -44,9 +47,7 @@ const ProductPage = () => {
           className="grid grid-cols-1 md:grid-cols-2 gap-10 pb-16"
         >
           <div className="aspect-[3/4] rounded-xl overflow-hidden bg-muted">
-            <div className="w-full h-full gradient-gold opacity-30 flex items-center justify-center">
-              <span className="text-8xl font-display font-bold text-primary-foreground/30">{product.name.charAt(0)}</span>
-            </div>
+            <img src={imageSrc} alt={product.name} className="w-full h-full object-cover" />
           </div>
 
           <div className="flex flex-col justify-center">
