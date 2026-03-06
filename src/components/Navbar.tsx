@@ -1,0 +1,93 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { ShoppingBag, Menu, X, Search } from "lucide-react";
+import { useCart } from "@/context/CartContext";
+import { motion, AnimatePresence } from "framer-motion";
+import logo from "@/assets/logo.png";
+
+const navLinks = [
+  { label: "Home", to: "/" },
+  { label: "Kids Wear", to: "/category/kids-wear" },
+  { label: "Men's Casual", to: "/category/mens-casual" },
+  { label: "Women's Casual", to: "/category/womens-casual" },
+  { label: "Party Wear", to: "/category/mens-party" },
+  { label: "Wedding", to: "/category/wedding-traditional" },
+];
+
+const Navbar = () => {
+  const { totalItems, setIsCartOpen } = useCart();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  return (
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16 lg:h-20">
+          <Link to="/" className="flex items-center gap-2">
+            <img src={logo} alt="Sri Designs & Fashions" className="h-12 lg:h-14 w-auto" />
+          </Link>
+
+          <div className="hidden lg:flex items-center gap-8">
+            {navLinks.map(link => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className="text-sm font-medium tracking-wide text-foreground/80 hover:text-primary transition-colors uppercase"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-4">
+            <Link to="/search" className="p-2 text-foreground/70 hover:text-primary transition-colors">
+              <Search size={20} />
+            </Link>
+            <button
+              onClick={() => setIsCartOpen(true)}
+              className="relative p-2 text-foreground/70 hover:text-primary transition-colors"
+            >
+              <ShoppingBag size={20} />
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-semibold">
+                  {totalItems}
+                </span>
+              )}
+            </button>
+            <button
+              className="lg:hidden p-2 text-foreground/70"
+              onClick={() => setMobileOpen(!mobileOpen)}
+            >
+              {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="lg:hidden bg-background border-b border-border overflow-hidden"
+          >
+            <div className="container mx-auto px-4 py-4 flex flex-col gap-3">
+              {navLinks.map(link => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setMobileOpen(false)}
+                  className="text-sm font-medium tracking-wide text-foreground/80 hover:text-primary transition-colors uppercase py-2"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </nav>
+  );
+};
+
+export default Navbar;
