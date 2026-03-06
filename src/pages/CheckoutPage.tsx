@@ -6,7 +6,7 @@ import { ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 const CheckoutPage = () => {
-  const { items, totalPrice, clearCart } = useCart();
+  const { items, totalPrice, placeOrder } = useCart();
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", phone: "", address: "", city: "", pincode: "" });
 
@@ -16,8 +16,8 @@ const CheckoutPage = () => {
       toast.error("Please fill all fields");
       return;
     }
-    clearCart();
-    navigate("/order-confirmed", { state: { items, totalPrice, address: form } });
+    const order = placeOrder(form);
+    navigate("/order-confirmed", { state: { items: order.items.map(i => ({ product: { id: i.name, name: i.name, price: i.price }, quantity: i.qty })), totalPrice: order.total, address: form } });
   };
 
   if (items.length === 0) {

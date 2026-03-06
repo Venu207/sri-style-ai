@@ -2,23 +2,11 @@ import { Link } from "react-router-dom";
 import { CheckCircle, Truck, Package } from "lucide-react";
 import { motion } from "framer-motion";
 import Footer from "@/components/Footer";
-
-const orders = [
-  {
-    id: "ORD-20260306-001",
-    date: "March 6, 2026",
-    status: "Confirmed",
-    deliveryBoy: "Santhosh Kumar",
-    items: [
-      { name: "Royal Silk Saree", qty: 1, price: 8500 },
-      { name: "Designer Blouse", qty: 1, price: 2200 },
-    ],
-    total: 10700,
-    address: "12, Gandhi Nagar, Chennai - 600020",
-  },
-];
+import { useCart } from "@/context/CartContext";
 
 const OrdersPage = () => {
+  const { orders } = useCart();
+
   return (
     <div className="min-h-screen pt-20 lg:pt-24">
       <div className="container mx-auto px-4 py-8">
@@ -40,19 +28,17 @@ const OrdersPage = () => {
                 transition={{ delay: i * 0.1 }}
                 className="border border-border rounded-xl overflow-hidden"
               >
-                {/* Header */}
                 <div className="bg-muted/50 px-6 py-4 flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-xs text-muted-foreground">Order #{order.id}</p>
                     <p className="text-sm font-medium text-foreground">{order.date}</p>
                   </div>
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/30">
-                    <CheckCircle size={14} className="text-green-500" />
-                    <span className="text-xs font-semibold text-green-600">{order.status}</span>
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30">
+                    <CheckCircle size={14} className="text-primary" />
+                    <span className="text-xs font-semibold text-primary">{order.status}</span>
                   </div>
                 </div>
 
-                {/* Items */}
                 <div className="px-6 py-4 space-y-2">
                   {order.items.map((item, j) => (
                     <div key={j} className="flex justify-between text-sm">
@@ -66,11 +52,15 @@ const OrdersPage = () => {
                   </div>
                 </div>
 
-                {/* Delivery Info */}
-                <div className="px-6 py-4 bg-muted/30 border-t border-border flex flex-wrap items-center gap-3 text-sm">
-                  <Truck size={16} className="text-primary" />
-                  <span className="text-muted-foreground">Delivery by</span>
-                  <span className="font-semibold text-foreground">{order.deliveryBoy}</span>
+                <div className="px-6 py-4 bg-muted/30 border-t border-border">
+                  <div className="flex flex-wrap items-center gap-3 text-sm">
+                    <Truck size={16} className="text-primary" />
+                    <span className="text-muted-foreground">Delivery by</span>
+                    <span className="font-semibold text-foreground">{order.deliveryBoy}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {order.address.name}, {order.address.address}, {order.address.city} - {order.address.pincode}
+                  </p>
                 </div>
               </motion.div>
             ))}
