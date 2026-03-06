@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, Sparkles } from "lucide-react";
+import { MessageCircle, X, Send, Sparkles, ShoppingBag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { searchProducts, Product } from "@/data/products";
+import { searchProducts, allProducts, Product } from "@/data/products";
+import { getProductImage } from "@/data/productImages";
 import { useCart } from "@/context/CartContext";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -41,33 +42,59 @@ const ChatBot = () => {
   const getRecommendations = (query: string): { text: string; products: Product[] } => {
     const q = query.toLowerCase();
     let searchTerms: string[] = [];
+    let categoryFilter: string | null = null;
 
-    if (q.includes("party") && q.includes("men")) searchTerms = ["blazer", "party", "suit", "silk shirt"];
-    else if (q.includes("party") && q.includes("women")) searchTerms = ["cocktail", "gown", "party", "sequin"];
-    else if (q.includes("wedding") || q.includes("bridal")) searchTerms = ["bridal", "wedding", "silk saree", "lehenga", "sherwani"];
-    else if (q.includes("traditional")) searchTerms = ["saree", "kurta", "lehenga", "dhoti", "silk"];
-    else if (q.includes("casual") && q.includes("men")) searchTerms = ["shirt", "jeans", "t-shirt", "casual"];
-    else if (q.includes("casual") && q.includes("women")) searchTerms = ["kurti", "dress", "top", "casual"];
-    else if (q.includes("kid")) searchTerms = ["kids", "frock", "kurta set"];
+    // Detect department/category
+    if (q.includes("kid")) categoryFilter = "kids";
+    else if ((q.includes("men") || q.includes("boy") || q.includes("male") || q.includes("guy")) && (q.includes("party") || q.includes("celebration") || q.includes("event"))) categoryFilter = "mens-party";
+    else if ((q.includes("women") || q.includes("girl") || q.includes("lady") || q.includes("female")) && (q.includes("party") || q.includes("celebration") || q.includes("event"))) categoryFilter = "womens-party";
+    else if (q.includes("wedding") || q.includes("bridal") || q.includes("marriage") || q.includes("reception")) categoryFilter = "wedding";
+    else if ((q.includes("men") || q.includes("boy") || q.includes("male") || q.includes("guy")) && (q.includes("casual") || q.includes("everyday") || q.includes("daily"))) categoryFilter = "mens-casual";
+    else if ((q.includes("women") || q.includes("girl") || q.includes("lady") || q.includes("female")) && (q.includes("casual") || q.includes("everyday") || q.includes("daily"))) categoryFilter = "womens-casual";
+
+    // Detect specific item types
+    const itemKeywords = ["saree", "lehenga", "kurta", "shirt", "dress", "gown", "blazer", "suit", "sherwani", "kurti", "jeans", "frock", "salwar", "anarkali", "palazzo", "t-shirt", "jacket", "trouser", "pant", "dhoti", "jumpsuit", "top", "blouse", "skirt"];
+    const matchedItems = itemKeywords.filter(k => q.includes(k));
+
+    if (matchedItems.length > 0) {
+      searchTerms = matchedItems;
+    } else if (q.includes("party")) searchTerms = ["party", "blazer", "gown", "cocktail", "sequin"];
+    else if (q.includes("wedding") || q.includes("bridal")) searchTerms = ["bridal", "wedding", "silk", "lehenga", "sherwani"];
+    else if (q.includes("traditional") || q.includes("ethnic")) searchTerms = ["saree", "kurta", "lehenga", "dhoti", "silk"];
+    else if (q.includes("casual")) searchTerms = ["casual", "shirt", "kurti", "jeans", "t-shirt"];
+    else if (q.includes("formal")) searchTerms = ["formal", "suit", "blazer", "shirt"];
     else {
-      const words = q.split(/\s+/).filter(w => w.length > 3);
-      searchTerms = words.length > 0 ? words : ["popular"];
+      const words = q.split(/\s+/).filter(w => w.length > 3 && !["show", "suggest", "have", "want", "need", "like", "wear", "what", "give", "find", "looking", "please", "could", "would", "some", "good", "best", "your", "this", "that", "with", "from", "about", "have", "does"].includes(w));
+      searchTerms = words.length > 0 ? words : [];
     }
 
     let results: Product[] = [];
-    for (const term of searchTerms) {
-      results = [...results, ...searchProducts(term)];
+    if (categoryFilter && searchTerms.length === 0) {
+      results = allProducts.filter(p => p.category === categoryFilter);
+    } else {
+      for (const term of searchTerms) {
+        const found = searchProducts(term);
+        results = [...results, ...(categoryFilter ? found.filter(p => p.category === categoryFilter) : found)];
+      }
+      if (results.length === 0 && categoryFilter) {
+        results = allProducts.filter(p => p.category === categoryFilter);
+      }
     }
-    const unique = Array.from(new Map(results.map(p => [p.id, p])).values()).slice(0, 4);
+
+    const unique = Array.from(new Map(results.map(p => [p.id, p])).values()).slice(0, 6);
 
     if (unique.length === 0) {
-      return { text: "I couldn't find exact matches, but let me show you some of our popular items. Could you tell me more about what you're looking for? Like the occasion, your preferred style, and budget range?", products: searchProducts("designer").slice(0, 3) };
+      // Fallback: show popular items
+      const popular = allProducts.filter(p => p.price > 2000).slice(0, 4);
+      return { text: "I couldn't find an exact match for that. Here are some popular picks from our collection! Could you tell me more about the occasion, style, or type of clothing you're looking for?", products: popular };
     }
 
-    let text = "Based on your preferences, here are my top recommendations from our collection:\n\n";
-    if (q.includes("party")) text = "For a stunning party look, I'd recommend these pieces:\n\n";
-    if (q.includes("wedding")) text = "For the special day, here are our finest selections:\n\n";
-    if (q.includes("casual")) text = "For effortless everyday style, check these out:\n\n";
+    let text = `I found ${unique.length} great options for you! Here are my recommendations:\n\n`;
+    if (q.includes("party")) text = `Perfect for a party! Here are ${unique.length} stunning picks:\n\n`;
+    if (q.includes("wedding") || q.includes("bridal")) text = `For the special occasion, here are ${unique.length} exquisite choices:\n\n`;
+    if (q.includes("casual")) text = `For effortless everyday style, check out these ${unique.length} options:\n\n`;
+    if (q.includes("kid")) text = `Adorable picks for the little ones! Here are ${unique.length} options:\n\n`;
+    if (matchedItems.length > 0) text = `Here are ${unique.length} beautiful ${matchedItems.join(" & ")} options from our collection:\n\n`;
 
     return { text, products: unique };
   };
@@ -133,23 +160,34 @@ const ChatBot = () => {
                     <p className="whitespace-pre-wrap">{msg.content}</p>
                     {msg.products && msg.products.length > 0 && (
                       <div className="mt-3 space-y-2">
-                        {msg.products.map(p => (
-                          <div key={p.id} className="bg-background/80 rounded-lg p-2.5 border border-border">
-                            <div className="flex items-start justify-between gap-2">
-                              <Link to={`/product/${p.id}`} onClick={() => setIsOpen(false)} className="flex-1 min-w-0">
-                                <p className="font-display text-xs font-semibold truncate text-foreground hover:text-primary transition-colors">{p.name}</p>
-                                <p className="text-[10px] text-muted-foreground">{p.department}</p>
-                                <p className="font-semibold text-xs mt-1 text-foreground">₹{p.price.toLocaleString()}</p>
-                              </Link>
-                              <button
-                                onClick={() => handleAddToCart(p)}
-                                className="shrink-0 px-2 py-1 text-[10px] tracking-wider uppercase font-semibold bg-primary text-primary-foreground rounded hover:bg-gold-dark transition-colors"
-                              >
-                                Add to Cart
-                              </button>
+                        {msg.products.map(p => {
+                          const productIndex = parseInt(p.id.split("-").pop() || "1") - 1;
+                          const imageSrc = getProductImage(p.category, productIndex);
+                          return (
+                            <div key={p.id} className="bg-background/80 rounded-lg overflow-hidden border border-border">
+                              <div className="flex gap-2.5 p-2">
+                                <Link to={`/product/${p.id}`} onClick={() => setIsOpen(false)} className="shrink-0">
+                                  <img src={imageSrc} alt={p.name} className="w-14 h-14 rounded-md object-cover" />
+                                </Link>
+                                <div className="flex-1 min-w-0">
+                                  <Link to={`/product/${p.id}`} onClick={() => setIsOpen(false)}>
+                                    <p className="font-display text-xs font-semibold truncate text-foreground hover:text-primary transition-colors">{p.name}</p>
+                                    <p className="text-[10px] text-muted-foreground">{p.department}</p>
+                                    <div className="flex items-center justify-between mt-1">
+                                      <p className="font-semibold text-xs text-foreground">₹{p.price.toLocaleString()}</p>
+                                    </div>
+                                  </Link>
+                                </div>
+                                <button
+                                  onClick={() => handleAddToCart(p)}
+                                  className="shrink-0 self-center w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-gold-dark transition-colors"
+                                >
+                                  <ShoppingBag size={12} />
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
