@@ -12,6 +12,7 @@ const navLinks = [
   { label: "Women's Casual", to: "/category/womens-casual" },
   { label: "Party Wear", to: "/category/mens-party" },
   { label: "Wedding", to: "/category/wedding-traditional" },
+  { label: "Orders", to: "/orders" },
 ];
 
 const Navbar = () => {
