@@ -22,7 +22,7 @@ const CheckoutPage = () => {
       totalPrice: order.total,
       address: form,
     };
-    navigate("/verify-otp", { state: { phone: form.phone, orderData } });
+    navigate("/verify-otp", { state: { email: form.email, phone: form.phone, orderData } });
   };
 
   if (items.length === 0) {
