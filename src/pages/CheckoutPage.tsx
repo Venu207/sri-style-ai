@@ -8,11 +8,11 @@ import { toast } from "sonner";
 const CheckoutPage = () => {
   const { items, totalPrice, placeOrder } = useCart();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", phone: "", address: "", city: "", pincode: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", address: "", city: "", pincode: "" });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.phone || !form.address || !form.city || !form.pincode) {
+    if (!form.name || !form.email || !form.phone || !form.address || !form.city || !form.pincode) {
       toast.error("Please fill all fields");
       return;
     }
@@ -22,7 +22,7 @@ const CheckoutPage = () => {
       totalPrice: order.total,
       address: form,
     };
-    navigate("/verify-otp", { state: { phone: form.phone, orderData } });
+    navigate("/verify-otp", { state: { email: form.email, phone: form.phone, orderData } });
   };
 
   if (items.length === 0) {
@@ -50,6 +50,7 @@ const CheckoutPage = () => {
             <h2 className="font-display text-lg font-semibold mb-4">Delivery Details</h2>
             {[
               { key: "name", label: "Full Name", type: "text", placeholder: "Your full name" },
+              { key: "email", label: "Gmail Address", type: "email", placeholder: "yourname@gmail.com" },
               { key: "phone", label: "Mobile Number", type: "tel", placeholder: "+91 98765 43210" },
               { key: "address", label: "Address", type: "text", placeholder: "House/Flat, Street" },
               { key: "city", label: "City", type: "text", placeholder: "Chennai" },
