@@ -35,6 +35,7 @@ const App = () => (
             <Route path="/category/:slug" element={<CategoryPage />} />
             <Route path="/product/:id" element={<ProductPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/verify-otp" element={<OTPVerification />} />
             <Route path="/order-confirmed" element={<OrderConfirmed />} />
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/search" element={<SearchPage />} />
