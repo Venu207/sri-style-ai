@@ -208,21 +208,23 @@ const comboSets: Record<string, { items: Array<{ name: string; category: string;
   },
 };
 
+const qualifiers = ["Premium", "Classic", "Elegant", "Designer", "Exclusive", "Luxury", "Royal", "Traditional", "Modern", "Trendy", "Stylish", "Handcrafted", "Exquisite", "Deluxe", "Signature", "Heritage", "Contemporary", "Artisan", "Bespoke", "Vintage", "Regal", "Festive", "Grand", "Supreme", "Elite"];
+
 function generateProducts(items: string[], departmentId: string, priceRange: [number, number]): Product[] {
   const dept = departments.find(d => d.id === departmentId);
   return items.map((name, i) => {
-    const color = colors[i % colors.length];
+    const qualifier = qualifiers[i % qualifiers.length];
     const price = Math.round((priceRange[0] + Math.random() * (priceRange[1] - priceRange[0])) / 50) * 50;
     return {
       id: `${departmentId}-${i + 1}`,
-      name: `${color} ${name}`,
+      name: `${qualifier} ${name}`,
       price,
       category: departmentId,
       department: dept?.name || "",
-      description: `Premium quality ${name.toLowerCase()} in beautiful ${color.toLowerCase()} color. Crafted with the finest materials for comfort and style. Perfect for any occasion.`,
+      description: `${qualifier} quality ${name.toLowerCase()}. Crafted with the finest materials for comfort and style. Perfect for any occasion.`,
       image: `https://images.unsplash.com/photo-${1550000000000 + i * 1000}?w=400&h=500&fit=crop`,
       stock: Math.floor(Math.random() * 20) + 5,
-      tags: [color.toLowerCase(), name.toLowerCase(), departmentId],
+      tags: [qualifier.toLowerCase(), name.toLowerCase(), departmentId],
     };
   });
 }
