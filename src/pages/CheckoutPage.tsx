@@ -12,7 +12,7 @@ const CheckoutPage = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.phone || !form.address || !form.city || !form.pincode) {
+    if (!form.name || !form.email || !form.phone || !form.address || !form.city || !form.pincode) {
       toast.error("Please fill all fields");
       return;
     }
