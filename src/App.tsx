@@ -12,6 +12,7 @@ import CategoryPage from "./pages/CategoryPage";
 import ProductPage from "./pages/ProductPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrderConfirmed from "./pages/OrderConfirmed";
+import OTPVerification from "./pages/OTPVerification";
 import OrdersPage from "./pages/OrdersPage";
 import SearchPage from "./pages/SearchPage";
 import ShopPage from "./pages/ShopPage";
