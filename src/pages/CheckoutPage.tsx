@@ -8,7 +8,7 @@ import { toast } from "sonner";
 const CheckoutPage = () => {
   const { items, totalPrice, placeOrder } = useCart();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", phone: "", address: "", city: "", pincode: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", address: "", city: "", pincode: "" });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
