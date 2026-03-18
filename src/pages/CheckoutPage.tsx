@@ -17,7 +17,12 @@ const CheckoutPage = () => {
       return;
     }
     const order = placeOrder(form);
-    navigate("/order-confirmed", { state: { items: order.items.map(i => ({ product: { id: i.name, name: i.name, price: i.price }, quantity: i.qty })), totalPrice: order.total, address: form } });
+    const orderData = {
+      items: order.items.map(i => ({ product: { id: i.name, name: i.name, price: i.price }, quantity: i.qty })),
+      totalPrice: order.total,
+      address: form,
+    };
+    navigate("/verify-otp", { state: { phone: form.phone, orderData } });
   };
 
   if (items.length === 0) {

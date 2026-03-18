@@ -12,6 +12,7 @@ import CategoryPage from "./pages/CategoryPage";
 import ProductPage from "./pages/ProductPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrderConfirmed from "./pages/OrderConfirmed";
+import OTPVerification from "./pages/OTPVerification";
 import OrdersPage from "./pages/OrdersPage";
 import SearchPage from "./pages/SearchPage";
 import ShopPage from "./pages/ShopPage";
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/category/:slug" element={<CategoryPage />} />
             <Route path="/product/:id" element={<ProductPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/verify-otp" element={<OTPVerification />} />
             <Route path="/order-confirmed" element={<OrderConfirmed />} />
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/search" element={<SearchPage />} />

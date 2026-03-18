@@ -19,9 +19,14 @@ const OrderConfirmed = () => {
             <CheckCircle size={36} className="text-primary-foreground" />
           </div>
           <h1 className="text-3xl font-display font-bold text-foreground mb-3">Booking Confirmed!</h1>
-          <p className="text-muted-foreground mb-8">
-            Thank you for your order. Your clothes will be delivered by <strong className="text-foreground">Santhosh Kumar</strong>.
+          <p className="text-muted-foreground mb-4">
+            Your booking is confirmed and will be delivered soon.
           </p>
+          <div className="bg-primary/10 rounded-lg px-5 py-3 mb-8 inline-block">
+            <p className="text-sm font-medium text-foreground">
+              🚚 Delivery Agent: <strong>Surya</strong> – <a href="tel:7670983370" className="text-primary hover:underline">7670983370</a>
+            </p>
+          </div>
 
           {state?.items && (
             <div className="bg-muted/50 rounded-xl p-6 text-left mb-8">
