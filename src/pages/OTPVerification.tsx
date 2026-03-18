@@ -4,7 +4,8 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { ShieldCheck, Phone } from "lucide-react";
+import { ShieldCheck, Mail } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import Footer from "@/components/Footer";
 
 const OTPVerification = () => {
@@ -15,16 +16,41 @@ const OTPVerification = () => {
   const [otp, setOtp] = useState("");
   const [generatedOtp, setGeneratedOtp] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
 
+  const sendOtp = async () => {
+    const code = String(Math.floor(1000 + Math.random() * 9000));
+    setGeneratedOtp(code);
+    setIsSending(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("send-otp-email", {
+        body: { email: state?.email, otp: code },
+      });
+
+      if (error) throw error;
+
+      if (data?.sent) {
+        toast.success(`OTP sent to ${state?.email}`, { duration: 5000 });
+      } else {
+        // Fallback: show OTP in toast for demo
+        toast.info(`Demo OTP: ${code}`, { duration: 15000, description: `For ${state?.email}` });
+      }
+    } catch (err) {
+      console.error("Failed to send OTP email:", err);
+      toast.info(`Demo OTP: ${code}`, { duration: 15000, description: `For ${state?.email}` });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   useEffect(() => {
-    if (!state?.phone) {
+    if (!state?.email) {
       navigate("/checkout");
       return;
     }
-    const code = String(Math.floor(1000 + Math.random() * 9000));
-    setGeneratedOtp(code);
-    toast.info(`Demo OTP: ${code}`, { duration: 15000, description: `Sent to ${state.phone}` });
+    sendOtp();
   }, []);
 
   useEffect(() => {
@@ -34,10 +60,8 @@ const OTPVerification = () => {
   }, [timeLeft]);
 
   const handleResend = () => {
-    const code = String(Math.floor(1000 + Math.random() * 9000));
-    setGeneratedOtp(code);
     setTimeLeft(60);
-    toast.info(`Demo OTP: ${code}`, { duration: 15000, description: `Resent to ${state?.phone}` });
+    sendOtp();
   };
 
   const handleVerify = () => {
@@ -58,8 +82,8 @@ const OTPVerification = () => {
     }, 1000);
   };
 
-  const maskedPhone = state?.phone
-    ? state.phone.replace(/(\d{2})\d+(\d{2})/, "$1******$2")
+  const maskedEmail = state?.email
+    ? state.email.replace(/(.{2})(.*)(@.*)/, "$1***$3")
     : "";
 
   return (
@@ -74,7 +98,7 @@ const OTPVerification = () => {
             <CardDescription className="text-sm">
               We've sent a 4-digit OTP to{" "}
               <span className="font-semibold text-foreground flex items-center justify-center gap-1 mt-1">
-                <Phone size={14} /> {maskedPhone}
+                <Mail size={14} /> {maskedEmail}
               </span>
             </CardDescription>
           </CardHeader>
@@ -102,14 +126,14 @@ const OTPVerification = () => {
               {timeLeft > 0 ? (
                 <span>Resend OTP in <strong className="text-foreground">{timeLeft}s</strong></span>
               ) : (
-                <button onClick={handleResend} className="text-primary font-semibold hover:underline">
-                  Resend OTP
+                <button onClick={handleResend} disabled={isSending} className="text-primary font-semibold hover:underline">
+                  {isSending ? "Sending..." : "Resend OTP"}
                 </button>
               )}
             </div>
 
             <p className="text-xs text-center text-muted-foreground">
-              This is a demo. The OTP is shown as a notification above.
+              Check your email inbox (and spam folder) for the OTP.
             </p>
           </CardContent>
         </Card>

@@ -2,3 +2,6 @@ project_id = "byodznmmqxyzzcidfwse"
 
 [functions.fashion-chat]
 verify_jwt = false
+
+[functions.send-otp-email]
+verify_jwt = false
