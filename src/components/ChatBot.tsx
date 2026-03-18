@@ -6,6 +6,7 @@ import { getProductImage } from "@/data/productImages";
 import { useCart } from "@/context/CartContext";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   id: string;
@@ -20,6 +21,34 @@ const suggestedQuestions = [
   "What casual wear do you have for women?",
   "Kids traditional wear suggestions",
 ];
+
+function parseProductsFromResponse(text: string): { cleanText: string; products: Product[] } {
+  const match = text.match(/<products>(.*?)<\/products>/s);
+  if (!match) return { cleanText: text.trim(), products: [] };
+
+  const cleanText = text.replace(/<products>.*?<\/products>/s, "").trim();
+
+  try {
+    const data = JSON.parse(match[1]);
+    const searches: string[] = data.searches || [];
+    const category: string | undefined = data.category;
+
+    let results: Product[] = [];
+    for (const term of searches) {
+      const found = searchProducts(term);
+      results.push(...(category ? found.filter(p => p.category === category) : found));
+    }
+
+    if (results.length === 0 && category) {
+      results = allProducts.filter(p => p.category === category);
+    }
+
+    const unique = Array.from(new Map(results.map(p => [p.id, p])).values()).slice(0, 6);
+    return { cleanText, products: unique };
+  } catch {
+    return { cleanText, products: [] };
+  }
+}
 
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -39,66 +68,6 @@ const ChatBot = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const getRecommendations = (query: string): { text: string; products: Product[] } => {
-    const q = query.toLowerCase();
-    let searchTerms: string[] = [];
-    let categoryFilter: string | null = null;
-
-    // Detect department/category
-    if (q.includes("kid")) categoryFilter = "kids";
-    else if ((q.includes("men") || q.includes("boy") || q.includes("male") || q.includes("guy")) && (q.includes("party") || q.includes("celebration") || q.includes("event"))) categoryFilter = "mens-party";
-    else if ((q.includes("women") || q.includes("girl") || q.includes("lady") || q.includes("female")) && (q.includes("party") || q.includes("celebration") || q.includes("event"))) categoryFilter = "womens-party";
-    else if (q.includes("wedding") || q.includes("bridal") || q.includes("marriage") || q.includes("reception")) categoryFilter = "wedding";
-    else if ((q.includes("men") || q.includes("boy") || q.includes("male") || q.includes("guy")) && (q.includes("casual") || q.includes("everyday") || q.includes("daily"))) categoryFilter = "mens-casual";
-    else if ((q.includes("women") || q.includes("girl") || q.includes("lady") || q.includes("female")) && (q.includes("casual") || q.includes("everyday") || q.includes("daily"))) categoryFilter = "womens-casual";
-
-    // Detect specific item types
-    const itemKeywords = ["saree", "lehenga", "kurta", "shirt", "dress", "gown", "blazer", "suit", "sherwani", "kurti", "jeans", "frock", "salwar", "anarkali", "palazzo", "t-shirt", "jacket", "trouser", "pant", "dhoti", "jumpsuit", "top", "blouse", "skirt"];
-    const matchedItems = itemKeywords.filter(k => q.includes(k));
-
-    if (matchedItems.length > 0) {
-      searchTerms = matchedItems;
-    } else if (q.includes("party")) searchTerms = ["party", "blazer", "gown", "cocktail", "sequin"];
-    else if (q.includes("wedding") || q.includes("bridal")) searchTerms = ["bridal", "wedding", "silk", "lehenga", "sherwani"];
-    else if (q.includes("traditional") || q.includes("ethnic")) searchTerms = ["saree", "kurta", "lehenga", "dhoti", "silk"];
-    else if (q.includes("casual")) searchTerms = ["casual", "shirt", "kurti", "jeans", "t-shirt"];
-    else if (q.includes("formal")) searchTerms = ["formal", "suit", "blazer", "shirt"];
-    else {
-      const words = q.split(/\s+/).filter(w => w.length > 3 && !["show", "suggest", "have", "want", "need", "like", "wear", "what", "give", "find", "looking", "please", "could", "would", "some", "good", "best", "your", "this", "that", "with", "from", "about", "have", "does"].includes(w));
-      searchTerms = words.length > 0 ? words : [];
-    }
-
-    let results: Product[] = [];
-    if (categoryFilter && searchTerms.length === 0) {
-      results = allProducts.filter(p => p.category === categoryFilter);
-    } else {
-      for (const term of searchTerms) {
-        const found = searchProducts(term);
-        results = [...results, ...(categoryFilter ? found.filter(p => p.category === categoryFilter) : found)];
-      }
-      if (results.length === 0 && categoryFilter) {
-        results = allProducts.filter(p => p.category === categoryFilter);
-      }
-    }
-
-    const unique = Array.from(new Map(results.map(p => [p.id, p])).values()).slice(0, 6);
-
-    if (unique.length === 0) {
-      // Fallback: show popular items
-      const popular = allProducts.filter(p => p.price > 2000).slice(0, 4);
-      return { text: "I couldn't find an exact match for that. Here are some popular picks from our collection! Could you tell me more about the occasion, style, or type of clothing you're looking for?", products: popular };
-    }
-
-    let text = `I found ${unique.length} great options for you! Here are my recommendations:\n\n`;
-    if (q.includes("party")) text = `Perfect for a party! Here are ${unique.length} stunning picks:\n\n`;
-    if (q.includes("wedding") || q.includes("bridal")) text = `For the special occasion, here are ${unique.length} exquisite choices:\n\n`;
-    if (q.includes("casual")) text = `For effortless everyday style, check out these ${unique.length} options:\n\n`;
-    if (q.includes("kid")) text = `Adorable picks for the little ones! Here are ${unique.length} options:\n\n`;
-    if (matchedItems.length > 0) text = `Here are ${unique.length} beautiful ${matchedItems.join(" & ")} options from our collection:\n\n`;
-
-    return { text, products: unique };
-  };
-
   const handleSend = async (text?: string) => {
     const msg = text || input.trim();
     if (!msg) return;
@@ -108,17 +77,40 @@ const ChatBot = () => {
     setInput("");
     setIsTyping(true);
 
-    await new Promise(r => setTimeout(r, 800 + Math.random() * 800));
+    try {
+      const chatHistory = messages
+        .filter(m => m.id !== "welcome")
+        .map(m => ({ role: m.role, content: m.content }));
+      chatHistory.push({ role: "user", content: msg });
 
-    const { text: responseText, products } = getRecommendations(msg);
-    const assistantMsg: Message = {
-      id: (Date.now() + 1).toString(),
-      role: "assistant",
-      content: responseText,
-      products,
-    };
-    setMessages(prev => [...prev, assistantMsg]);
-    setIsTyping(false);
+      const { data, error } = await supabase.functions.invoke("fashion-chat", {
+        body: { messages: chatHistory },
+      });
+
+      if (error) throw error;
+
+      const responseContent = data?.content || "I'm sorry, I couldn't process that. Could you try rephrasing?";
+      const { cleanText, products } = parseProductsFromResponse(responseContent);
+
+      const assistantMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: cleanText,
+        products,
+      };
+      setMessages(prev => [...prev, assistantMsg]);
+    } catch (e: any) {
+      console.error("Chat error:", e);
+      const errorMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "I'm having trouble connecting right now. Please try again in a moment! 🙏",
+      };
+      setMessages(prev => [...prev, errorMsg]);
+      toast.error("Failed to get AI response");
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleAddToCart = (product: Product) => {
@@ -144,7 +136,7 @@ const ChatBot = () => {
                 </div>
                 <div>
                   <h3 className="font-display text-sm font-semibold text-cream">AI Fashion Stylist</h3>
-                  <p className="text-[10px] text-cream/60">Sri Designs & Fashions</p>
+                  <p className="text-[10px] text-cream/60">Powered by AI • Sri Designs</p>
                 </div>
               </div>
               <button onClick={() => setIsOpen(false)} className="text-cream/60 hover:text-cream">
@@ -173,9 +165,7 @@ const ChatBot = () => {
                                   <Link to={`/product/${p.id}`} onClick={() => setIsOpen(false)}>
                                     <p className="font-display text-xs font-semibold truncate text-foreground hover:text-primary transition-colors">{p.name}</p>
                                     <p className="text-[10px] text-muted-foreground">{p.department}</p>
-                                    <div className="flex items-center justify-between mt-1">
-                                      <p className="font-semibold text-xs text-foreground">₹{p.price.toLocaleString()}</p>
-                                    </div>
+                                    <p className="font-semibold text-xs text-foreground mt-1">₹{p.price.toLocaleString()}</p>
                                   </Link>
                                 </div>
                                 <button
@@ -228,10 +218,11 @@ const ChatBot = () => {
                   onChange={e => setInput(e.target.value)}
                   placeholder="Ask for outfit suggestions..."
                   className="flex-1 bg-muted rounded-full px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground"
+                  disabled={isTyping}
                 />
                 <button
                   type="submit"
-                  disabled={!input.trim()}
+                  disabled={!input.trim() || isTyping}
                   className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-gold-dark transition-colors disabled:opacity-40"
                 >
                   <Send size={16} />
