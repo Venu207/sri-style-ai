@@ -71,7 +71,7 @@ CONVERSATION FLOW:
 1. Greet warmly
 2. Understand what they're looking for (occasion, style)
 3. Ask about budget if not mentioned
-4. Recommend products (with combos if appropriate)`;
+4. Recommend products (with combos if appropriate)
 5. If they want to book, collect name, phone, address
 6. Confirm booking`;
 
