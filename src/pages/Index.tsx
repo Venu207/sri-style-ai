@@ -26,7 +26,7 @@ const Index = () => {
             <p className="text-primary text-xs tracking-[0.3em] uppercase font-medium mb-2">Explore</p>
             <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground">Our Collections</h2>
           </motion.div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
             {departments.map((dept, i) => (
               <CategoryCard key={dept.id} department={dept} index={i} />
             ))}
