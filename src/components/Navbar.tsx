@@ -7,11 +7,12 @@ import logo from "@/assets/logo.png";
 
 const navLinks = [
   { label: "Home", to: "/" },
-  { label: "Kids Wear", to: "/category/kids-wear" },
-  { label: "Men's Casual", to: "/category/mens-casual" },
-  { label: "Women's Casual", to: "/category/womens-casual" },
-  { label: "Party Wear", to: "/category/mens-party" },
-  { label: "Wedding", to: "/category/wedding-traditional" },
+  { label: "Shop All", to: "/shop" },
+  { label: "Men", to: "/category/mens-casual" },
+  { label: "Women", to: "/category/womens-casual" },
+  { label: "Kids", to: "/category/boys-wear" },
+  { label: "Sarees", to: "/category/sarees" },
+  { label: "Wedding", to: "/category/bridal-collection" },
   { label: "Orders", to: "/orders" },
 ];
 

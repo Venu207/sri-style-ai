@@ -1,4 +1,4 @@
-// Product image imports - 3 per category, cycled across 20 products each
+// Product image imports - 3 per category, cycled across products
 import kids1 from "@/assets/products/kids-1.jpg";
 import kids2 from "@/assets/products/kids-2.jpg";
 import kids3 from "@/assets/products/kids-3.jpg";
@@ -19,12 +19,20 @@ import wedding2 from "@/assets/products/wedding-2.jpg";
 import wedding3 from "@/assets/products/wedding-3.jpg";
 
 const categoryImages: Record<string, string[]> = {
-  kids: [kids1, kids2, kids3],
+  "kids-boys": [kids1, kids2, kids3],
+  "kids-girls": [kids1, kids2, kids3],
   "mens-casual": [mensCasual1, mensCasual2, mensCasual3],
-  "womens-casual": [womensCasual1, womensCasual2, womensCasual3],
+  "mens-formal": [mensParty1, mensParty2, mensParty3],
   "mens-party": [mensParty1, mensParty2, mensParty3],
+  "mens-ethnic": [mensParty1, mensParty2, mensParty3],
+  "womens-casual": [womensCasual1, womensCasual2, womensCasual3],
+  "womens-formal": [womensCasual1, womensCasual2, womensCasual3],
   "womens-party": [womensParty1, womensParty2, womensParty3],
-  wedding: [wedding1, wedding2, wedding3],
+  "womens-ethnic": [womensParty1, womensParty2, womensParty3],
+  "wedding-bridal": [wedding1, wedding2, wedding3],
+  "wedding-groom": [wedding1, wedding2, wedding3],
+  "sarees": [womensParty1, womensParty2, womensParty3],
+  "accessories": [wedding1, wedding2, wedding3],
 };
 
 export function getProductImage(categoryId: string, index: number): string {

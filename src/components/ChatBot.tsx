@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, Sparkles, ShoppingBag } from "lucide-react";
+import { MessageCircle, X, Send, Sparkles, ShoppingBag, Package } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { searchProducts, allProducts, Product } from "@/data/products";
+import { searchProducts, allProducts, getComboProducts, getProductsByPriceRange, Product, comboSets } from "@/data/products";
 import { getProductImage } from "@/data/productImages";
 import { useCart } from "@/context/CartContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -13,41 +13,77 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   products?: Product[];
+  comboProducts?: { comboId: string; products: Product[] };
+  booking?: { name: string; phone: string; address: string };
 }
 
 const suggestedQuestions = [
   "Suggest a party outfit for men",
   "Show me wedding sarees",
-  "What casual wear do you have for women?",
+  "Book the best saree combo",
   "Kids traditional wear suggestions",
 ];
 
-function parseProductsFromResponse(text: string): { cleanText: string; products: Product[] } {
-  const match = text.match(/<products>(.*?)<\/products>/s);
-  if (!match) return { cleanText: text.trim(), products: [] };
+function parseResponse(text: string): {
+  cleanText: string;
+  products: Product[];
+  comboProducts?: { comboId: string; products: Product[] };
+  booking?: { name: string; phone: string; address: string };
+} {
+  let cleanText = text;
+  let products: Product[] = [];
+  let comboProducts: { comboId: string; products: Product[] } | undefined;
+  let booking: { name: string; phone: string; address: string } | undefined;
 
-  const cleanText = text.replace(/<products>.*?<\/products>/s, "").trim();
+  // Parse <products> tag
+  const prodMatch = cleanText.match(/<products>(.*?)<\/products>/s);
+  if (prodMatch) {
+    cleanText = cleanText.replace(/<products>.*?<\/products>/s, "");
+    try {
+      const data = JSON.parse(prodMatch[1]);
+      const searches: string[] = data.searches || [];
+      const category: string | undefined = data.category;
+      const minPrice: number | undefined = data.minPrice;
+      const maxPrice: number | undefined = data.maxPrice;
 
-  try {
-    const data = JSON.parse(match[1]);
-    const searches: string[] = data.searches || [];
-    const category: string | undefined = data.category;
-
-    let results: Product[] = [];
-    for (const term of searches) {
-      const found = searchProducts(term);
-      results.push(...(category ? found.filter(p => p.category === category) : found));
-    }
-
-    if (results.length === 0 && category) {
-      results = allProducts.filter(p => p.category === category);
-    }
-
-    const unique = Array.from(new Map(results.map(p => [p.id, p])).values()).slice(0, 6);
-    return { cleanText, products: unique };
-  } catch {
-    return { cleanText, products: [] };
+      let results: Product[] = [];
+      for (const term of searches) {
+        const found = searchProducts(term);
+        results.push(...(category ? found.filter(p => p.category === category) : found));
+      }
+      if (results.length === 0 && category) {
+        results = allProducts.filter(p => p.category === category && !p.comboGroup);
+      }
+      if (minPrice !== undefined || maxPrice !== undefined) {
+        results = getProductsByPriceRange(results, minPrice || 0, maxPrice || Infinity);
+      }
+      // Remove combo items from regular results
+      results = results.filter(p => !p.comboGroup);
+      products = Array.from(new Map(results.map(p => [p.id, p])).values()).slice(0, 6);
+    } catch { /* ignore */ }
   }
+
+  // Parse <combo> tag
+  const comboMatch = cleanText.match(/<combo>(.*?)<\/combo>/s);
+  if (comboMatch) {
+    cleanText = cleanText.replace(/<combo>.*?<\/combo>/s, "");
+    const comboId = comboMatch[1].trim();
+    const items = getComboProducts(comboId);
+    if (items.length > 0) {
+      comboProducts = { comboId, products: items };
+    }
+  }
+
+  // Parse <booking> tag
+  const bookingMatch = cleanText.match(/<booking>(.*?)<\/booking>/s);
+  if (bookingMatch) {
+    cleanText = cleanText.replace(/<booking>.*?<\/booking>/s, "");
+    try {
+      booking = JSON.parse(bookingMatch[1]);
+    } catch { /* ignore */ }
+  }
+
+  return { cleanText: cleanText.trim(), products, comboProducts, booking };
 }
 
 const ChatBot = () => {
@@ -56,13 +92,14 @@ const ChatBot = () => {
     {
       id: "welcome",
       role: "assistant",
-      content: "Welcome to Sri Designs & Fashions! 👋 I'm your AI Fashion Stylist. Tell me about the occasion, your style preference, and I'll recommend the perfect outfit for you!",
+      content: "Welcome to Sri Designs & Fashions! 👋 I'm your AI Fashion Stylist. Tell me about the occasion, your style preference, and budget — I'll recommend the perfect outfit for you!",
     },
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { addToCart } = useCart();
+  const navigate = useNavigate();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -90,13 +127,15 @@ const ChatBot = () => {
       if (error) throw error;
 
       const responseContent = data?.content || "I'm sorry, I couldn't process that. Could you try rephrasing?";
-      const { cleanText, products } = parseProductsFromResponse(responseContent);
+      const { cleanText, products, comboProducts, booking } = parseResponse(responseContent);
 
       const assistantMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
         content: cleanText,
         products,
+        comboProducts,
+        booking,
       };
       setMessages(prev => [...prev, assistantMsg]);
     } catch (e: any) {
@@ -118,6 +157,44 @@ const ChatBot = () => {
     toast.success(`${product.name} added to cart`);
   };
 
+  const handleAddComboToCart = (products: Product[]) => {
+    products.forEach(p => addToCart(p));
+    toast.success(`Complete combo set (${products.length} items) added to cart!`);
+  };
+
+  const handleBookCombo = (products: Product[]) => {
+    products.forEach(p => addToCart(p));
+    setIsOpen(false);
+    navigate("/checkout");
+  };
+
+  const renderProductCard = (p: Product) => {
+    const productIndex = parseInt(p.id.split("-").pop() || "1") - 1;
+    const imageSrc = getProductImage(p.category, Math.abs(productIndex));
+    return (
+      <div key={p.id} className="bg-background/80 rounded-lg overflow-hidden border border-border">
+        <div className="flex gap-2.5 p-2">
+          <Link to={`/product/${p.id}`} onClick={() => setIsOpen(false)} className="shrink-0">
+            <img src={imageSrc} alt={p.name} className="w-14 h-14 rounded-md object-cover" />
+          </Link>
+          <div className="flex-1 min-w-0">
+            <Link to={`/product/${p.id}`} onClick={() => setIsOpen(false)}>
+              <p className="font-display text-xs font-semibold truncate text-foreground hover:text-primary transition-colors">{p.name}</p>
+              <p className="text-[10px] text-muted-foreground">{p.department}</p>
+              <p className="font-semibold text-xs text-foreground mt-1">₹{p.price.toLocaleString()}</p>
+            </Link>
+          </div>
+          <button
+            onClick={() => handleAddToCart(p)}
+            className="shrink-0 self-center w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-gold-dark transition-colors"
+          >
+            <ShoppingBag size={12} />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <AnimatePresence>
@@ -126,7 +203,7 @@ const ChatBot = () => {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-24 right-4 md:right-6 w-[360px] max-w-[calc(100vw-2rem)] h-[520px] bg-background rounded-2xl shadow-2xl border border-border z-50 flex flex-col overflow-hidden"
+            className="fixed bottom-24 right-4 md:right-6 w-[380px] max-w-[calc(100vw-2rem)] h-[560px] bg-background rounded-2xl shadow-2xl border border-border z-50 flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="gradient-dark p-4 flex items-center justify-between">
@@ -150,34 +227,57 @@ const ChatBot = () => {
                 <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                   <div className={`max-w-[85%] ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"} rounded-2xl px-4 py-2.5 text-sm`}>
                     <p className="whitespace-pre-wrap">{msg.content}</p>
+
+                    {/* Combo Set */}
+                    {msg.comboProducts && (
+                      <div className="mt-3 p-2.5 bg-primary/5 border border-primary/20 rounded-lg">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <Package size={14} className="text-primary" />
+                          <p className="text-xs font-display font-semibold text-primary">Complete Combo Set</p>
+                        </div>
+                        <div className="space-y-1.5">
+                          {msg.comboProducts.products.map(p => (
+                            <div key={p.id} className="flex justify-between items-center text-xs">
+                              <span className="truncate flex-1">{p.name}</span>
+                              <span className="font-semibold ml-2">₹{p.price.toLocaleString()}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex justify-between items-center mt-2 pt-2 border-t border-primary/20 text-xs font-bold">
+                          <span>Total</span>
+                          <span>₹{msg.comboProducts.products.reduce((s, p) => s + p.price, 0).toLocaleString()}</span>
+                        </div>
+                        <div className="flex gap-2 mt-2">
+                          <button
+                            onClick={() => handleAddComboToCart(msg.comboProducts!.products)}
+                            className="flex-1 text-[10px] py-1.5 rounded-full bg-primary text-primary-foreground hover:bg-gold-dark transition-colors font-medium"
+                          >
+                            Add All to Cart
+                          </button>
+                          <button
+                            onClick={() => handleBookCombo(msg.comboProducts!.products)}
+                            className="flex-1 text-[10px] py-1.5 rounded-full bg-foreground text-background hover:bg-foreground/90 transition-colors font-medium"
+                          >
+                            Book Now
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Product cards */}
                     {msg.products && msg.products.length > 0 && (
                       <div className="mt-3 space-y-2">
-                        {msg.products.map(p => {
-                          const productIndex = parseInt(p.id.split("-").pop() || "1") - 1;
-                          const imageSrc = getProductImage(p.category, productIndex);
-                          return (
-                            <div key={p.id} className="bg-background/80 rounded-lg overflow-hidden border border-border">
-                              <div className="flex gap-2.5 p-2">
-                                <Link to={`/product/${p.id}`} onClick={() => setIsOpen(false)} className="shrink-0">
-                                  <img src={imageSrc} alt={p.name} className="w-14 h-14 rounded-md object-cover" />
-                                </Link>
-                                <div className="flex-1 min-w-0">
-                                  <Link to={`/product/${p.id}`} onClick={() => setIsOpen(false)}>
-                                    <p className="font-display text-xs font-semibold truncate text-foreground hover:text-primary transition-colors">{p.name}</p>
-                                    <p className="text-[10px] text-muted-foreground">{p.department}</p>
-                                    <p className="font-semibold text-xs text-foreground mt-1">₹{p.price.toLocaleString()}</p>
-                                  </Link>
-                                </div>
-                                <button
-                                  onClick={() => handleAddToCart(p)}
-                                  className="shrink-0 self-center w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-gold-dark transition-colors"
-                                >
-                                  <ShoppingBag size={12} />
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        })}
+                        {msg.products.map(renderProductCard)}
+                      </div>
+                    )}
+
+                    {/* Booking confirmation */}
+                    {msg.booking && (
+                      <div className="mt-3 p-2.5 bg-green-500/10 border border-green-500/30 rounded-lg">
+                        <p className="text-xs font-semibold text-green-700 dark:text-green-400 mb-1">📋 Booking Details</p>
+                        <p className="text-[11px]">Name: {msg.booking.name}</p>
+                        <p className="text-[11px]">Phone: {msg.booking.phone}</p>
+                        <p className="text-[11px]">Address: {msg.booking.address}</p>
                       </div>
                     )}
                   </div>
