@@ -59,7 +59,19 @@ const Navbar = () => {
             <Link to="/search" className="p-2 text-foreground/70 hover:text-primary transition-colors">
               <Search size={20} />
             </Link>
-            <button
+            {session ? (
+              <button
+                onClick={handleSignOut}
+                className="p-2 text-foreground/70 hover:text-primary transition-colors"
+                title="Sign out"
+              >
+                <LogOut size={20} />
+              </button>
+            ) : (
+              <Link to="/auth" className="p-2 text-foreground/70 hover:text-primary transition-colors" title="Sign in">
+                <User size={20} />
+              </Link>
+            )}
               onClick={() => setIsCartOpen(true)}
               className="relative p-2 text-foreground/70 hover:text-primary transition-colors"
             >
