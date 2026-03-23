@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ShoppingBag, Menu, X, Search } from "lucide-react";
+import { ShoppingBag, Menu, X, Search, User, LogOut } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
+import type { Session } from "@supabase/supabase-js";
 import logo from "@/assets/logo.png";
 
 const navLinks = [
@@ -19,6 +21,19 @@ const navLinks = [
 const Navbar = () => {
   const { totalItems, setIsCartOpen } = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+    supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
@@ -44,6 +59,19 @@ const Navbar = () => {
             <Link to="/search" className="p-2 text-foreground/70 hover:text-primary transition-colors">
               <Search size={20} />
             </Link>
+            {session ? (
+              <button
+                onClick={handleSignOut}
+                className="p-2 text-foreground/70 hover:text-primary transition-colors"
+                title="Sign out"
+              >
+                <LogOut size={20} />
+              </button>
+            ) : (
+              <Link to="/auth" className="p-2 text-foreground/70 hover:text-primary transition-colors" title="Sign in">
+                <User size={20} />
+              </Link>
+            )}
             <button
               onClick={() => setIsCartOpen(true)}
               className="relative p-2 text-foreground/70 hover:text-primary transition-colors"

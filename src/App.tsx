@@ -16,6 +16,7 @@ import OTPVerification from "./pages/OTPVerification";
 import OrdersPage from "./pages/OrdersPage";
 import SearchPage from "./pages/SearchPage";
 import ShopPage from "./pages/ShopPage";
+import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/shop" element={<ShopPage />} />
+            <Route path="/auth" element={<AuthPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
