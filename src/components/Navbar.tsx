@@ -72,6 +72,7 @@ const Navbar = () => {
                 <User size={20} />
               </Link>
             )}
+            <button
               onClick={() => setIsCartOpen(true)}
               className="relative p-2 text-foreground/70 hover:text-primary transition-colors"
             >
