@@ -1,6 +1,7 @@
 import HeroSection from "@/components/HeroSection";
 import CategoryCard from "@/components/CategoryCard";
 import ProductCard from "@/components/ProductCard";
+import PhoneOTPLogin from "@/components/PhoneOTPLogin";
 import Footer from "@/components/Footer";
 import { departments, allProducts } from "@/data/products";
 import { motion } from "framer-motion";
@@ -33,6 +34,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Phone OTP Login */}
+      <PhoneOTPLogin />
 
       {/* Featured */}
       <section className="py-20 bg-muted/50">
