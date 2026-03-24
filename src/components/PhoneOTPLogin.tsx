@@ -23,8 +23,11 @@ const PhoneOTPLogin = () => {
     }
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOtp({ phone });
-      if (error) throw error;
+      const { data, error } = await supabase.functions.invoke("twilio-send-otp", {
+        body: { phone },
+      });
+      if (error) throw new Error(error.message || "Failed to send OTP");
+      if (!data?.success) throw new Error(data?.error || "Failed to send OTP");
       toast.success("OTP sent to your mobile number!");
       setStep("otp");
     } catch (err: any) {
@@ -41,12 +44,11 @@ const PhoneOTPLogin = () => {
     }
     setLoading(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({
-        phone,
-        token: otp,
-        type: "sms",
+      const { data, error } = await supabase.functions.invoke("twilio-verify-otp", {
+        body: { phone, code: otp },
       });
-      if (error) throw error;
+      if (error) throw new Error(error.message || "Verification failed");
+      if (!data?.success) throw new Error("Invalid OTP. Please try again.");
       toast.success("Verified successfully!");
       setStep("success");
     } catch (err: any) {
