@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Phone, ShieldCheck, Sparkles, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
-import { Link } from "react-router-dom";
 
 type Step = "phone" | "otp" | "success";
 
