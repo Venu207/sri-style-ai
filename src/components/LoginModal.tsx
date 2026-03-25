@@ -55,8 +55,9 @@ const LoginModal = () => {
     }
     setLoading(true);
     try {
+      const fullPhone = `+91${phone}`;
       const { data, error } = await supabase.functions.invoke("twilio-verify-otp", {
-        body: { phone, code: otp },
+        body: { phone: fullPhone, code: otp },
       });
       if (error) throw new Error(error.message || "Verification failed");
       if (!data?.success) throw new Error("Invalid OTP. Please try again.");
