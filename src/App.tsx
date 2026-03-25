@@ -32,6 +32,7 @@ const App = () => (
           <Navbar />
           <CartDrawer />
           <ChatBot />
+          <LoginModal />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/category/:slug" element={<CategoryPage />} />
