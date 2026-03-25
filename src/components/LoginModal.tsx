@@ -150,7 +150,7 @@ const LoginModal = () => {
                   <h3 className="text-2xl font-display font-bold text-cream">Verify OTP</h3>
                   <p className="text-cream/60 text-sm font-body">
                     Enter the 6-digit code sent to{" "}
-                    <span className="text-gold-light font-semibold">{phone}</span>
+                    <span className="text-gold-light font-semibold">+91 {phone}</span>
                   </p>
                 </div>
 
