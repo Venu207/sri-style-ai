@@ -7,6 +7,7 @@ import { CartProvider } from "@/context/CartContext";
 import Navbar from "@/components/Navbar";
 import CartDrawer from "@/components/CartDrawer";
 import ChatBot from "@/components/ChatBot";
+import LoginModal from "@/components/LoginModal";
 import Index from "./pages/Index";
 import CategoryPage from "./pages/CategoryPage";
 import ProductPage from "./pages/ProductPage";
@@ -31,6 +32,7 @@ const App = () => (
           <Navbar />
           <CartDrawer />
           <ChatBot />
+          <LoginModal />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/category/:slug" element={<CategoryPage />} />
