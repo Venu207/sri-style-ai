@@ -15,7 +15,7 @@ const LOGIN_KEY = "sri_designs_logged_in";
 const LoginModal = () => {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>("phone");
-  const [phone, setPhone] = useState("+91");
+  const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -27,14 +27,15 @@ const LoginModal = () => {
   }, []);
 
   const handleSendOTP = async () => {
-    if (phone.length < 10) {
-      toast.error("Please enter a valid mobile number");
+    if (phone.length !== 10) {
+      toast.error("Please enter a valid 10-digit mobile number");
       return;
     }
     setLoading(true);
     try {
+      const fullPhone = `+91${phone}`;
       const { data, error } = await supabase.functions.invoke("twilio-send-otp", {
-        body: { phone },
+        body: { phone: fullPhone },
       });
       if (error) throw new Error(error.message || "Failed to send OTP");
       if (!data?.success) throw new Error(data?.error || "Failed to send OTP");
@@ -54,8 +55,9 @@ const LoginModal = () => {
     }
     setLoading(true);
     try {
+      const fullPhone = `+91${phone}`;
       const { data, error } = await supabase.functions.invoke("twilio-verify-otp", {
-        body: { phone, code: otp },
+        body: { phone: fullPhone, code: otp },
       });
       if (error) throw new Error(error.message || "Verification failed");
       if (!data?.success) throw new Error("Invalid OTP. Please try again.");
@@ -111,13 +113,16 @@ const LoginModal = () => {
                     <label className="text-cream/80 text-xs font-medium tracking-wider uppercase">
                       Mobile Number
                     </label>
-                    <Input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+91 98765 43210"
-                      className="bg-charcoal-light/50 border-gold/20 text-cream placeholder:text-cream/30 focus-visible:ring-gold h-12 text-base"
-                    />
+                    <div className="flex items-center gap-2">
+                      <span className="text-cream bg-charcoal-light/50 border border-gold/20 rounded-md h-12 px-3 flex items-center text-base select-none">+91</span>
+                      <Input
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                        placeholder="98765 43210"
+                        className="bg-charcoal-light/50 border-gold/20 text-cream placeholder:text-cream/30 focus-visible:ring-gold h-12 text-base"
+                      />
+                    </div>
                   </div>
                   <Button
                     onClick={handleSendOTP}
@@ -145,7 +150,7 @@ const LoginModal = () => {
                   <h3 className="text-2xl font-display font-bold text-cream">Verify OTP</h3>
                   <p className="text-cream/60 text-sm font-body">
                     Enter the 6-digit code sent to{" "}
-                    <span className="text-gold-light font-semibold">{phone}</span>
+                    <span className="text-gold-light font-semibold">+91 {phone}</span>
                   </p>
                 </div>
 
