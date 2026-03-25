@@ -27,14 +27,15 @@ const LoginModal = () => {
   }, []);
 
   const handleSendOTP = async () => {
-    if (phone.length < 10) {
-      toast.error("Please enter a valid mobile number");
+    if (phone.length !== 10) {
+      toast.error("Please enter a valid 10-digit mobile number");
       return;
     }
     setLoading(true);
     try {
+      const fullPhone = `+91${phone}`;
       const { data, error } = await supabase.functions.invoke("twilio-send-otp", {
-        body: { phone },
+        body: { phone: fullPhone },
       });
       if (error) throw new Error(error.message || "Failed to send OTP");
       if (!data?.success) throw new Error(data?.error || "Failed to send OTP");
