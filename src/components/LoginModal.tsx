@@ -15,7 +15,7 @@ const LOGIN_KEY = "sri_designs_logged_in";
 const LoginModal = () => {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>("phone");
-  const [phone, setPhone] = useState("+91");
+  const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
 
