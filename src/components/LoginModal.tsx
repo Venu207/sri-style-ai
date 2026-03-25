@@ -111,13 +111,16 @@ const LoginModal = () => {
                     <label className="text-cream/80 text-xs font-medium tracking-wider uppercase">
                       Mobile Number
                     </label>
-                    <Input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+91 98765 43210"
-                      className="bg-charcoal-light/50 border-gold/20 text-cream placeholder:text-cream/30 focus-visible:ring-gold h-12 text-base"
-                    />
+                    <div className="flex items-center gap-2">
+                      <span className="text-cream bg-charcoal-light/50 border border-gold/20 rounded-md h-12 px-3 flex items-center text-base select-none">+91</span>
+                      <Input
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                        placeholder="98765 43210"
+                        className="bg-charcoal-light/50 border-gold/20 text-cream placeholder:text-cream/30 focus-visible:ring-gold h-12 text-base"
+                      />
+                    </div>
                   </div>
                   <Button
                     onClick={handleSendOTP}
